@@ -48,7 +48,7 @@ class GeminiService:
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
-                    temperature=0.3,
+                    temperature=0.0,
                     max_output_tokens=self._max_output_tokens,
                     response_mime_type="application/json",
                     response_schema=response_schema,
