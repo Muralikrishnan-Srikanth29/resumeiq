@@ -1,0 +1,40 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main]
+    paths: ["frontend/**"]
+  pull_request:
+    branches: [main]
+    paths: ["frontend/**"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check + build
+        env:
+          NEXT_PUBLIC_API_URL: https://placeholder-api.onrender.com
+        run: npm run build
+
+  # Vercel auto-deploys on push to main via its GitHub integration once the
+  # repo is connected in the Vercel dashboard — no explicit deploy step
+  # needed here. This job exists to block merges on broken builds.

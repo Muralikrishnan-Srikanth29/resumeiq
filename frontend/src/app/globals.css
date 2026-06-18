@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0b0e14;
+  --color-paper: #f5f3ed;
+  --color-paper-dim: #ebe8e0;
+  --color-signal: #ff6b4a;
+  --color-verified: #1abc9c;
+  --color-flag: #e63950;
+  --color-slate: #6b7280;
+  --color-slate-light: #9aa0ab;
+  --color-line: #232838;
+
+  --font-display: "Space Grotesk", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --font-body: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", "Courier New", monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+  body {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background-color: var(--color-signal);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  .scan-line {
+    position: relative;
+    overflow: hidden;
+  }
+  .scan-line::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    height: 1px;
+    top: var(--scan-pos, 10%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-signal) 20%,
+      var(--color-signal) 80%,
+      transparent
+    );
+    box-shadow: 0 0 8px 1px var(--color-signal);
+    transition: top 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

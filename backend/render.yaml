@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: resumeiq-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: singapore
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: ALLOWED_ORIGINS
+        value: https://resumeiq.vercel.app
+        # Update to your actual Vercel domain after first frontend deploy.
+        # Comma-separate multiple origins, e.g. preview + production URLs.
+      - key: SUPABASE_URL
+        sync: false
+        # Set manually in Render dashboard — Project Settings > API > Project URL
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+        # Set manually in Render dashboard — Project Settings > API > service_role key
+        # NEVER commit this value. NEVER use the anon/public key here.
+      - key: GEMINI_API_KEY
+        sync: false
+        # Set manually in Render dashboard — from https://aistudio.google.com/apikey
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: RATE_LIMIT_ANALYSIS_PER_HOUR
+        value: "10"
+      - key: RATE_LIMIT_UPLOAD_PER_HOUR
+        value: "20"
+      - key: MAX_FILE_SIZE_MB
+        value: "5"

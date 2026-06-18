@@ -1,0 +1,67 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**"]
+  pull_request:
+    branches: [main]
+    paths: ["backend/**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff pytest
+
+      - name: Lint
+        run: ruff check app/ --output-format=github
+
+      - name: Verify app imports and boots
+        env:
+          SUPABASE_URL: https://placeholder.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: placeholder
+          GEMINI_API_KEY: placeholder
+          ALLOWED_ORIGINS: http://localhost:3000
+        run: |
+          python -c "
+          from app.main import app
+          assert len(app.routes) > 10, 'Expected routes did not register'
+          print(f'OK: {len(app.routes)} routes registered')
+          "
+
+      - name: Run unit tests
+        env:
+          SUPABASE_URL: https://placeholder.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: placeholder
+          GEMINI_API_KEY: placeholder
+          ALLOWED_ORIGINS: http://localhost:3000
+        run: pytest tests/ -v --tb=short
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+        # RENDER_DEPLOY_HOOK_URL: Render dashboard > Service > Settings > Deploy Hook
+        # Render also auto-deploys on push if autoDeploy is enabled in render.yaml,
+        # making this step a redundant-but-explicit confirmation trigger.
