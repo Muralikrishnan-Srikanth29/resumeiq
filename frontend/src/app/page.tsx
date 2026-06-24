@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ResumeInput } from "@/components/input/resume-input";
 import { JDInput } from "@/components/input/jd-input";
 import { Button } from "@/components/ui/button";
@@ -29,40 +29,76 @@ export default function Home() {
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [parsedResume, setParsedResume] = useState<ResumeJSON | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [progressText, setProgressText] = useState("");
 
   const hasInput = selectedFile !== null || pastedResumeText.trim().length >= 200;
 
+  useEffect(() => {
+  if (appState !== "analyzing") return;
+
+  const timer = setInterval(() => {
+    setProgress((p) => {
+      if (p >= 90) return p;
+      return p + 1;
+    });
+  }, 800);
+
+  return () => clearInterval(timer);
+}, [appState]);
+
   async function handleAnalyze() {
-    setError(null);
-    setAppState("analyzing");
-    try {
-      let response: AnalyzeResponse;
+  setError(null);
+  setProgress(10);
+  setProgressText("Uploading resume...");
+  setAppState("analyzing");
 
-      if (selectedFile) {
-        const uploadResult = await uploadResumeFile(selectedFile);
-        setParsedResume(uploadResult.resume);
-        response = await analyzeByResumeId({
-          resumeId: uploadResult.resume_id,
-          jdText: jdText.trim() || undefined,
-        });
-      } else {
-        response = await analyze({
-          resumeText: pastedResumeText,
-          jdText: jdText.trim() || undefined,
-        });
-      }
+  try {
+    let response: AnalyzeResponse;
 
-      setResult(response);
-      setAppState("results");
-    } catch (err) {
-      const message =
-        err instanceof APIError
-          ? err.message
-          : "Something went wrong while analyzing your resume. Please try again.";
-      setError(message);
-      setAppState("input");
+    if (selectedFile) {
+      const uploadResult = await uploadResumeFile(selectedFile);
+
+      setProgress(35);
+      setProgressText("Parsing resume...");
+
+      setParsedResume(uploadResult.resume);
+
+      setProgress(65);
+      setProgressText("Running AI analysis...");
+
+      response = await analyzeByResumeId({
+        resumeId: uploadResult.resume_id,
+        jdText: jdText.trim() || undefined,
+      });
+    } else {
+      setProgress(30);
+      setProgressText("Preparing resume...");
+
+      response = await analyze({
+        resumeText: pastedResumeText,
+        jdText: jdText.trim() || undefined,
+      });
     }
+
+    setProgress(100);
+    setProgressText("Finalizing results...");
+
+    setResult(response);
+
+    setTimeout(() => {
+      setAppState("results");
+    }, 500);
+  } catch (err) {
+    const message =
+      err instanceof APIError
+        ? err.message
+        : "Something went wrong while analyzing your resume. Please try again.";
+
+    setError(message);
+    setAppState("input");
   }
+}
 
   function handleStartOver() {
     setAppState("input");
@@ -143,7 +179,28 @@ export default function Home() {
           </div>
         )}
 
-        {appState === "analyzing" && <AnalyzingState />}
+        {appState === "analyzing" && (
+          <div className="max-w-xl mx-auto py-20">
+            <h2 className="text-2xl font-semibold text-paper mb-4">
+              Analyzing your resume...
+            </h2>
+
+            <p className="text-slate-light mb-4">
+              {progressText}
+            </p>
+
+            <div className="w-full h-3 bg-zinc-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-orange-500 transition-all duration-700"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+
+            <p className="mt-3 text-sm text-slate-light">
+              {progress}%
+            </p>
+          </div>
+        )}
 
         {appState === "results" && result && (
           <div className="space-y-6">
